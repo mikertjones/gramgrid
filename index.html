@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>Word Grid Puzzle</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="gramgrid-logo-2-transparent.png" alt="GramGrid" class="logo">
+            <h2 style="text-align: center; color: #fd7502;">Adds up to a word puzzle</h2>
+            <div style="text-align: center; margin-top: 10px;">
+                <a href="#" id="how-to-play-link" style="color: #2563eb; text-decoration: underline;">How to play</a>
+            </div>
+        </header>
+
+        <main>
+            <div class="puzzle-section">
+                <div class="words-given">
+                    <h3>Your 4 Words:</h3>
+                    <div class="word-list">
+                        <div class="word-chip-detailed">
+                            <div class="letters">S O F T</div>
+                            <div class="values">19 15 6 20</div>
+                        </div>
+                        <div class="word-chip-detailed">
+                            <div class="letters">R I O T</div>
+                            <div class="values">18 9 15 20</div>
+                        </div>
+                        <div class="word-chip-detailed">
+                            <div class="letters">W O R N</div>
+                            <div class="values">23 15 18 14</div>
+                        </div>
+                        <div class="word-chip-detailed">
+                            <div class="letters">N O D S</div>
+                            <div class="values">14 15 4 19</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-container">
+                    <div class="main-grid">
+                        <input type="text" class="cell" id="cell-0" maxlength="1">
+                        <input type="text" class="cell" id="cell-1" maxlength="1">
+                        <input type="text" class="cell" id="cell-2" maxlength="1">
+                        <div class="sum-display" id="row-0">0/35</div>
+                        
+                        <input type="text" class="cell" id="cell-3" maxlength="1">
+                        <input type="text" class="cell" id="cell-4" maxlength="1">
+                        <input type="text" class="cell" id="cell-5" maxlength="1">
+                        <div class="sum-display" id="row-1">0/52</div>
+                        
+                        <input type="text" class="cell" id="cell-6" maxlength="1">
+                        <input type="text" class="cell" id="cell-7" maxlength="1">
+                        <input type="text" class="cell" id="cell-8" maxlength="1">
+                        <div class="sum-display" id="row-2">0/41</div>
+                        
+                        <div class="sum-display" id="col-0">0/29</div>
+                        <div class="sum-display" id="col-1">0/49</div>
+                        <div class="sum-display" id="col-2">0/50</div>
+                        <div class="corner-cell"></div>
+                    </div>
+                </div>
+
+
+
+                <div class="final-word-section">
+                    <label for="final-word">9-letter word?</label>
+                    <input type="text" id="final-word" placeholder="9-letter word" maxlength="9">
+                    <div class="word-feedback" id="word-feedback"></div>
+                    
+                    <div class="action-buttons">
+                        <button id="reset-button">Reset Puzzle</button>
+                        <button id="reveal-button">Reveal Word</button>
+                    </div>
+                </div>
+
+                <div class="feedback" id="feedback"></div>
+            </div>
+        </main>
+
+        <footer>
+        </footer>
+    </div>
+
+    <!-- How to Play Popup -->
+    <div id="how-to-play-popup" class="popup-overlay" style="display: none;">
+        <div class="popup-content">
+            <div class="popup-header">
+                <h3>How to play</h3>
+                <button id="close-popup" class="close-button">&times;</button>
+            </div>
+            <div class="popup-body">
+                <p>You are given 4 4-letter words and their letter values.</p>
+                <p>Each word is to be arranged in the 4 2x2 blocks in the 3x3 grid corners.</p>
+                <img src="gramgrid-howto.jpg" alt="How to play GramGrid" style="width: 100%; max-width: 400px; height: auto; margin: 15px 0; border-radius: 8px;">
+                <p>There is more than one way to arrange the words but only <b>ONE</b> way where the letter values add up to the row and column targets</p>
+                <p>Find the word made by the 9 letters when the grid is complete.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

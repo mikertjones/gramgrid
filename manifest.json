@@ -1,0 +1,25 @@
+{
+  "name": "GramGrid",
+  "short_name": "GramGrid",
+  "description": "A challenging word puzzle where you arrange 4-letter words in a 3x3 grid to match sum targets and discover a hidden word.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' fill='%232563eb'/%3E%3Cg fill='white'%3E%3Crect x='20' y='20' width='50' height='50' rx='5'/%3E%3Crect x='75' y='20' width='50' height='50' rx='5'/%3E%3Crect x='130' y='20' width='50' height='50' rx='5'/%3E%3Crect x='20' y='75' width='50' height='50' rx='5'/%3E%3Crect x='75' y='75' width='50' height='50' rx='5'/%3E%3Crect x='130' y='75' width='50' height='50' rx='5'/%3E%3Crect x='20' y='130' width='50' height='50' rx='5'/%3E%3Crect x='75' y='130' width='50' height='50' rx='5'/%3E%3Crect x='130' y='130' width='50' height='50' rx='5'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%232563eb'/%3E%3Cg fill='white'%3E%3Crect x='50' y='50' width='130' height='130' rx='15'/%3E%3Crect x='195' y='50' width='130' height='130' rx='15'/%3E%3Crect x='340' y='50' width='130' height='130' rx='15'/%3E%3Crect x='50' y='195' width='130' height='130' rx='15'/%3E%3Crect x='195' y='195' width='130' height='130' rx='15'/%3E%3Crect x='340' y='195' width='130' height='130' rx='15'/%3E%3Crect x='50' y='340' width='130' height='130' rx='15'/%3E%3Crect x='195' y='340' width='130' height='130' rx='15'/%3E%3Crect x='340' y='340' width='130' height='130' rx='15'/%3E%3C/g%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["games", "entertainment", "puzzle"],
+  "lang": "en-US"
+} 
