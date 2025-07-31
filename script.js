@@ -1,12 +1,24 @@
 class WordGridPuzzle {
-    constructor() {
-        this.targetRowSums = [35, 52, 41];
-        this.targetColSums = [29, 49, 50];
-        this.givenWords = ['SOFT', 'RIOT', 'WORN', 'NODS'];
-        this.correctSolution = 'SNOWDRIFT';
+    constructor(puzzleData) {
+        // Initialize puzzle data with defaults
+        this.puzzleData = puzzleData;
+        this.currentPuzzleIndex = 0;
+        this.weeklyPuzzles = [];
         
+        // Initialize with default values to prevent errors
+        this.targetRowSums = [0, 0, 0];
+        this.targetColSums = [0, 0, 0];
+        this.givenWords = [];
+        this.correctSolution = '';
+        
+        // Initialize grid
         this.initializeGrid();
         this.attachEventListeners();
+        
+        // Load actual puzzle data (this will override the defaults)
+        if (puzzleData) {
+            this.loadPuzzleData(puzzleData);
+        }
     }
 
     initializeGrid() {
@@ -15,6 +27,124 @@ class WordGridPuzzle {
             this.cells[i] = document.getElementById(`cell-${i}`);
         }
         this.updateAllSums();
+    }
+
+    loadPuzzleData(puzzleData) {
+        console.log('Loading puzzle data...');
+        
+        if (!puzzleData) {
+            console.error('ERROR: puzzleData is null or undefined!');
+            return;
+        }
+        
+        // Check if this is the nested puzzle-data structure
+        const actualPuzzle = puzzleData['puzzle-data'] || puzzleData;
+        
+        // Check if targets exist
+        if (!actualPuzzle.targets) {
+            console.error('ERROR: No targets found in puzzle data!');
+            console.log('Available keys:', Object.keys(actualPuzzle));
+            return;
+        }
+        
+        // Set current puzzle data
+        this.targetRowSums = actualPuzzle.targets.rows;
+        this.targetColSums = actualPuzzle.targets.cols;
+        this.givenWords = actualPuzzle.words.map(word => word.word);
+        this.correctSolution = actualPuzzle.solution;
+        
+        console.log('Puzzle loaded successfully:', this.correctSolution);
+        
+        // Update the word display
+        this.updateWordDisplay(actualPuzzle.words);
+        
+        // Update the grid targets
+        this.updateAllSums();
+    }
+
+    updateWordDisplay(words) {
+        const wordList = document.querySelector('.word-list');
+        wordList.innerHTML = '';
+        
+        words.forEach(wordData => {
+            const wordChip = document.createElement('div');
+            wordChip.className = 'word-chip-detailed';
+            
+            const lettersDiv = document.createElement('div');
+            lettersDiv.className = 'letters';
+            lettersDiv.textContent = wordData.letters.join(' ');
+            
+            const valuesDiv = document.createElement('div');
+            valuesDiv.className = 'values';
+            valuesDiv.textContent = wordData.values.join(' ');
+            
+            wordChip.appendChild(lettersDiv);
+            wordChip.appendChild(valuesDiv);
+            wordList.appendChild(wordChip);
+        });
+    }
+
+    setWeeklyPuzzles(puzzles) {
+        this.weeklyPuzzles = puzzles;
+        this.currentPuzzleIndex = 0; // Start with today's puzzle
+        console.log(`Loaded ${puzzles.length} puzzles for navigation`);
+        this.updateNavigationButtons();
+    }
+
+    navigateToPuzzle(direction) {
+        const newIndex = this.currentPuzzleIndex + direction;
+        if (newIndex >= 0 && newIndex < this.weeklyPuzzles.length) {
+            this.currentPuzzleIndex = newIndex;
+            
+            // Extract puzzle data - could be .puzzle or ["puzzle-data"]
+            const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+            const puzzleData = currentPuzzle.puzzle || currentPuzzle['puzzle-data'];
+            
+            this.loadPuzzleData(puzzleData);
+            this.updateNavigationButtons();
+            this.updatePuzzleTitle();
+            this.resetPuzzle(); // Clear the grid when switching puzzles
+        }
+    }
+
+    updateNavigationButtons() {
+        const prevBtn = document.getElementById('prev-day-btn');
+        const nextBtn = document.getElementById('next-day-btn');
+        
+        // Show/hide previous day button (keep space but make invisible)
+        if (this.currentPuzzleIndex < this.weeklyPuzzles.length - 1) {
+            prevBtn.style.visibility = 'visible';
+            prevBtn.style.pointerEvents = 'auto';
+        } else {
+            prevBtn.style.visibility = 'hidden';
+            prevBtn.style.pointerEvents = 'none';
+        }
+        
+        // Show/hide next day button (keep space but make invisible)
+        if (this.currentPuzzleIndex > 0) {
+            nextBtn.style.visibility = 'visible';
+            nextBtn.style.pointerEvents = 'auto';
+        } else {
+            nextBtn.style.visibility = 'hidden';
+            nextBtn.style.pointerEvents = 'none';
+        }
+    }
+
+    updatePuzzleTitle() {
+        const titleElement = document.getElementById('puzzle-title');
+        const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+        
+        if (this.currentPuzzleIndex === 0) {
+            titleElement.textContent = "Today's puzzle";
+        } else {
+            const puzzleDate = new Date(currentPuzzle.date);
+            const formattedDate = puzzleDate.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+            titleElement.textContent = formattedDate;
+        }
     }
 
     attachEventListeners() {
@@ -51,6 +181,15 @@ class WordGridPuzzle {
             } else {
                 this.clearWordFeedback();
             }
+        });
+
+        // Navigation buttons
+        document.getElementById('prev-day-btn').addEventListener('click', () => {
+            this.navigateToPuzzle(1); // Go to previous day (older puzzle)
+        });
+
+        document.getElementById('next-day-btn').addEventListener('click', () => {
+            this.navigateToPuzzle(-1); // Go to next day (newer puzzle)
         });
 
         // Popup functionality is now handled separately outside this class
@@ -294,6 +433,73 @@ class WordGridPuzzle {
 
 }
 
+// API Functions
+async function fetchWeeklyPuzzles() {
+    try {
+        //const response = await fetch('http://localhost:3000/api/puzzles/week?level=CL');
+        const response = await fetch('https://gramgrid-api-production.up.railway.app/api/puzzles/week?level=CL');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('API returned puzzles:', data.puzzles.length);
+        
+        // Use fallback only if no puzzles returned
+        if (data.puzzles.length === 0) {
+            console.log('Using fallback due to no API data');
+            return getDefaultPuzzle();
+        }
+        
+        return data.puzzles;
+    } catch (error) {
+        console.error('Error fetching weekly puzzles:', error);
+        return getDefaultPuzzle(); // Fallback to default puzzle
+    }
+}
+
+function getDefaultPuzzle() {
+    // Fallback puzzle data in case API is unavailable
+    const today = new Date();
+    const puzzles = [];
+    
+    // Create 4 test puzzles (today + 3 previous days) for testing navigation
+    for (let i = 0; i < 4; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        
+        puzzles.push({
+            date: date.toISOString().split('T')[0],
+            level: 'CL',
+            puzzle: {
+                words: [
+                    { word: 'SOFT', letters: ['S', 'O', 'F', 'T'], values: [19, 15, 6, 20] },
+                    { word: 'RIOT', letters: ['R', 'I', 'O', 'T'], values: [18, 9, 15, 20] },
+                    { word: 'WORN', letters: ['W', 'O', 'R', 'N'], values: [23, 15, 18, 14] },
+                    { word: 'NODS', letters: ['N', 'O', 'D', 'S'], values: [14, 15, 4, 19] }
+                ],
+                targets: {
+                    rows: [35, 52, 41],
+                    cols: [29, 49, 50]
+                },
+                solution: 'SNOWDRIFT'
+            }
+        });
+    }
+    
+    console.log('Using fallback puzzles:', puzzles.map(p => p.date));
+    return puzzles;
+}
+
+async function loadTodaysPuzzle() {
+    try {
+        const puzzles = await fetchWeeklyPuzzles();
+        return puzzles;
+    } catch (error) {
+        console.error('Error loading puzzle:', error);
+        return getDefaultPuzzle();
+    }
+}
+
 // Popup functionality - standalone functions
 function showHowToPlayPopup() {
     const popup = document.getElementById('how-to-play-popup');
@@ -310,9 +516,25 @@ function hideHowToPlayPopup() {
 }
 
 // Initialize everything when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize the puzzle
-    new WordGridPuzzle();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Load weekly puzzles and initialize the puzzle
+    console.log('Loading weekly puzzles...');
+    const weeklyPuzzles = await loadTodaysPuzzle();
+    console.log('Raw API response:', weeklyPuzzles);
+    console.log(`Got ${weeklyPuzzles.length} puzzles`);
+    
+    if (weeklyPuzzles.length > 0) {
+        // Extract the puzzle data - could be .puzzle or ["puzzle-data"]
+        const puzzleData = weeklyPuzzles[0].puzzle || weeklyPuzzles[0]['puzzle-data'];
+        
+        const puzzle = new WordGridPuzzle(puzzleData);
+        
+        // Set the weekly puzzles for navigation
+        puzzle.setWeeklyPuzzles(weeklyPuzzles);
+        puzzle.updatePuzzleTitle();
+    } else {
+        console.error('No puzzles received!');
+    }
     
     // Setup popup functionality
     const howToPlayLink = document.getElementById('how-to-play-link');
