@@ -111,7 +111,7 @@ header h1 {
 .grid-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .main-grid {
@@ -235,6 +235,42 @@ header h1 {
 .legend-row.numbers span {
     border-top: 1px solid #e5e7eb;
 }
+
+
+/* Timer Section - Properly Centered */
+.timer-section {
+    text-align: center;
+    margin: 0;
+    padding: 10px;
+    width: 100%;
+}
+
+.timer-display {
+    text-align: center;
+    font-size: 1.1em;
+    color: #374151;
+}
+
+#timer-text {
+    font-family: 'Courier New', monospace;
+    color: #2563eb;
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-right: 15px;
+}
+
+#completion-message {
+    color: #065f46;
+    background: #d1fae5;
+    padding: 8px 16px;
+    border-radius: 15px;
+    border: 1px solid #10b981;
+    font-size: 0.95em;
+    margin-left: 15px;
+ }
+ 
+
+
 
 .mobile-show {
     display: none;
