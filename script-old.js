@@ -10,12 +10,14 @@ class WordGridPuzzle {
         this.targetColSums = [0, 0, 0];
         this.givenWords = [];
         this.correctSolution = '';
+
         
         // Timer properties
         this.timerStarted = false;
         this.timerInterval = null;
         this.startTime = null;
         this.puzzleCompleted = false;
+         
         
         // Initialize grid
         this.initializeGrid();
@@ -33,7 +35,6 @@ class WordGridPuzzle {
             this.cells[i] = document.getElementById(`cell-${i}`);
         }
         this.updateAllSums();
-        //this.resetPuzzle();
     }
 
     loadPuzzleData(puzzleData) {
@@ -67,8 +68,6 @@ class WordGridPuzzle {
         
         // Update the grid targets
         this.updateAllSums();
-        this.checkAllSumsCorrect();
-
     }
 
     updateWordDisplay(words) {
@@ -128,7 +127,7 @@ class WordGridPuzzle {
             prevBtn.style.visibility = 'hidden';
             prevBtn.style.pointerEvents = 'none';
         }
-
+        
         // Show/hide next day button (keep space but make invisible)
         if (this.currentPuzzleIndex > 0) {
             nextBtn.style.visibility = 'visible';
@@ -142,7 +141,7 @@ class WordGridPuzzle {
     updatePuzzleTitle() {
         const titleElement = document.getElementById('puzzle-title');
         const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
-
+        
         if (this.currentPuzzleIndex === 0) {
             titleElement.textContent = "Today's puzzle";
         } else {
@@ -155,6 +154,7 @@ class WordGridPuzzle {
             titleElement.textContent = formattedDate;
         }
     }
+
 
     // Timer methods
     startTimer() {
@@ -213,12 +213,16 @@ class WordGridPuzzle {
             this.puzzleCompleted = true;
             this.stopTimer();
             
-/*            const completionMessage = document.getElementById('completion-message');
+            const completionMessage = document.getElementById('completion-message');
             if (completionMessage) {
                 completionMessage.style.display = 'inline';
             }
-*/        }
+        }
     }
+
+ 
+
+
 
     attachEventListeners() {
         // Add event listeners to all cells
@@ -228,20 +232,19 @@ class WordGridPuzzle {
                 
                 // Start timer on first input (after value is set)
                 if (e.target.value && !this.timerStarted && !this.puzzleCompleted) {
+                    console.log('should start timer');
                     this.startTimer();
                 }
                 
+
+
                 this.updateAllSums();
                 this.validateCornerWords();
-                this.checkAllSumsCorrect();
-
             });
             
             cell.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     this.focusNextCell(index);
-                } else if (e.key === 'Backspace' && e.target.value === '') {
-                    this.focusPreviousCell(index);
                 }
             });
         });
@@ -274,142 +277,162 @@ class WordGridPuzzle {
         document.getElementById('next-day-btn').addEventListener('click', () => {
             this.navigateToPuzzle(-1); // Go to next day (newer puzzle)
         });
-    }
 
-    focusNextCell(currentIndex) {
-        const nextIndex = currentIndex + 1;
-        if (nextIndex < 9) {
-            this.cells[nextIndex].focus();
-        }
-    }
-
-    focusPreviousCell(currentIndex) {
-        const prevIndex = currentIndex - 1;
-        if (prevIndex >= 0) {
-            this.cells[prevIndex].focus();
-        }
-    }
-
-    updateAllSums() {
-        this.updateRowSums();
-        this.updateColSums();
-    }
-
-    updateRowSums() {
-        for (let row = 0; row < 3; row++) {
-            let sum = 0;
-            for (let col = 0; col < 3; col++) {
-                const cellIndex = row * 3 + col;
-                const cellValue = this.cells[cellIndex].value;
-                if (cellValue) {
-                    sum += this.getLetterValue(cellValue);
-                }
-            }
-            
-            const sumDisplay = document.getElementById(`row-${row}`);
-            const target = this.targetRowSums[row];
-            sumDisplay.textContent = `${sum}/${target}`;
- 
-            // Style based on correctness
-            sumDisplay.classList.remove('correct', 'incorrect');
-            if (sum === target) {
-                sumDisplay.classList.add('correct');
-            } else if (sum > 0) {
-                sumDisplay.classList.add('incorrect');
-            }
-
-            //sumDisplay.classList.toggle('correct', sum === target);
-        }
-        return true;
-    }
-
-    updateColSums() {
-        for (let col = 0; col < 3; col++) {
-            let sum = 0;
-            for (let row = 0; row < 3; row++) {
-                const cellIndex = row * 3 + col;
-                const cellValue = this.cells[cellIndex].value;
-                if (cellValue) {
-                    sum += this.getLetterValue(cellValue);
-                }
-            }
-            
-            const sumDisplay = document.getElementById(`col-${col}`);
-            const target = this.targetColSums[col];
-            sumDisplay.textContent = `${sum}/${target}`;
-           // Style based on correctness
-            sumDisplay.classList.remove('correct', 'incorrect');
-            if (sum === target) {
-                sumDisplay.classList.add('correct');
-            } else if (sum > 0) {
-                sumDisplay.classList.add('incorrect');
-            }
-
-            //sumDisplay.classList.toggle('correct', sum === target);
-        }
-        return true;
+        // Popup functionality is now handled separately outside this class
     }
 
     getLetterValue(letter) {
+        if (!letter || letter === '') return 0;
         return letter.charCodeAt(0) - 64; // A=1, B=2, etc.
     }
 
-    validateCornerWords() {
-        const corners = [
-            [0, 1, 3, 4], // Top-left
-            [1, 2, 4, 5], // Top-right
-            [3, 4, 6, 7], // Bottom-left
-            [4, 5, 7, 8]  // Bottom-right
-        ];
-
-        corners.forEach(corner => {
-            const word = corner.map(index => this.cells[index].value).join('');
-            if (word.length === 4) {
-                const isValid = this.givenWords.includes(word);
-                corner.forEach(index => {
-                    this.cells[index].classList.toggle('corner', isValid);
-                });
-            }
-        });
+    focusNextCell(currentIndex) {
+        const nextIndex = (currentIndex + 1) % 9;
+        this.cells[nextIndex].focus();
     }
 
+    calculateRowSum(rowIndex) {
+        let sum = 0;
+        for (let col = 0; col < 3; col++) {
+            const cellIndex = rowIndex * 3 + col;
+            const letter = this.cells[cellIndex].value;
+            sum += this.getLetterValue(letter);
+        }
+        return sum;
+    }
+
+    calculateColSum(colIndex) {
+        let sum = 0;
+        for (let row = 0; row < 3; row++) {
+            const cellIndex = row * 3 + colIndex;
+            const letter = this.cells[cellIndex].value;
+            sum += this.getLetterValue(letter);
+        }
+        return sum;
+    }
+
+    updateAllSums() {
+        // Update row sums
+        for (let row = 0; row < 3; row++) {
+            const currentSum = this.calculateRowSum(row);
+            const targetSum = this.targetRowSums[row];
+            const display = document.getElementById(`row-${row}`);
+            display.textContent = `${currentSum}/${targetSum}`;
+            
+            // Style based on correctness
+            display.classList.remove('correct', 'incorrect');
+            if (currentSum === targetSum) {
+                display.classList.add('correct');
+            } else if (currentSum > 0) {
+                display.classList.add('incorrect');
+            }
+        }
+
+        // Update column sums
+        for (let col = 0; col < 3; col++) {
+            const currentSum = this.calculateColSum(col);
+            const targetSum = this.targetColSums[col];
+            const display = document.getElementById(`col-${col}`);
+            display.textContent = `${currentSum}/${targetSum}`;
+            
+            // Style based on correctness
+            display.classList.remove('correct', 'incorrect');
+            if (currentSum === targetSum) {
+                display.classList.add('correct');
+            } else if (currentSum > 0) {
+                display.classList.add('incorrect');
+            }
+        }
+    }
+
+    getCornerLetters(corner) {
+        // Get the 4 letters from each 2x2 corner
+        switch (corner) {
+            case 'TL': // Top-left: positions 0,1,3,4
+                return [
+                    this.cells[0].value,
+                    this.cells[1].value,
+                    this.cells[3].value,
+                    this.cells[4].value
+                ];
+            case 'TR': // Top-right: positions 1,2,4,5
+                return [
+                    this.cells[1].value,
+                    this.cells[2].value,
+                    this.cells[4].value,
+                    this.cells[5].value
+                ];
+            case 'BL': // Bottom-left: positions 3,4,6,7
+                return [
+                    this.cells[3].value,
+                    this.cells[4].value,
+                    this.cells[6].value,
+                    this.cells[7].value
+                ];
+            case 'BR': // Bottom-right: positions 4,5,7,8
+                return [
+                    this.cells[4].value,
+                    this.cells[5].value,
+                    this.cells[7].value,
+                    this.cells[8].value
+                ];
+        }
+    }
+
+    canFormWord(letters, word) {
+        const letterCount = {};
+        const wordCount = {};
+        
+        // Count letters available
+        letters.forEach(letter => {
+            if (letter && letter !== '') {
+                letterCount[letter] = (letterCount[letter] || 0) + 1;
+            }
+        });
+        
+        // Count letters needed for word
+        for (let char of word) {
+            wordCount[char] = (wordCount[char] || 0) + 1;
+        }
+        
+        // Check if we have enough of each letter
+        for (let char in wordCount) {
+            if ((letterCount[char] || 0) < wordCount[char]) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+
+    validateCornerWords() {
+        const corners = ['TL', 'TR', 'BL', 'BR'];
+        let validCorners = 0;
+        
+        corners.forEach(corner => {
+            const letters = this.getCornerLetters(corner);
+            let foundValidWord = false;
+            
+            // Check if any of the given words can be formed
+            this.givenWords.forEach(word => {
+                if (this.canFormWord(letters, word)) {
+                    foundValidWord = true;
+                }
+            });
+            
+            if (foundValidWord) validCorners++;
+        });
+        
+        return validCorners === 4;
+    }
 
     checkAllSumsCorrect() {
-        const rowSumsCorrect = this.targetRowSums.every((target, index) => {
-            let sum = 0;
-            for (let col = 0; col < 3; col++) {
-                const cellIndex = index * 3 + col;
-                const cellValue = this.cells[cellIndex].value;
-                if (cellValue) {
-                    sum += this.getLetterValue(cellValue);
-                }
-            }
-            return sum === target;
-        });
-
-        const colSumsCorrect = this.targetColSums.every((target, index) => {
-            let sum = 0;
-            for (let row = 0; row < 3; row++) {
-                const cellIndex = row * 3 + index;
-                const cellValue = this.cells[cellIndex].value;
-                if (cellValue) {
-                    sum += this.getLetterValue(cellValue);
-                }
-            }
-            return sum === target;
-        });
-
-        const gridComplete = rowSumsCorrect && colSumsCorrect;
-        if(gridComplete) {
-//            console.log('grid complete');
-            this.stopTimer();
-            const completionMessage = document.getElementById('completion-message');
-            if (completionMessage) {
-                completionMessage.style.display = 'inline';
-            }
-       }
- 
-        return gridComplete;
+        // Check if all row and column sums are correct
+        for (let i = 0; i < 3; i++) {
+            if (this.calculateRowSum(i) !== this.targetRowSums[i]) return false;
+            if (this.calculateColSum(i) !== this.targetColSums[i]) return false;
+        }
+        return true;
     }
 
     getCurrentGridWord() {
@@ -426,6 +449,7 @@ class WordGridPuzzle {
             
             // Complete the puzzle and stop the timer
             this.completePuzzle();
+
         } else {
             wordFeedback.textContent = 'Sorry, incorrect';
             wordFeedback.className = 'word-feedback error';
@@ -457,24 +481,12 @@ class WordGridPuzzle {
         // Check if sums are correct
         if (!this.checkAllSumsCorrect()) {
             feedback.textContent = 'Grid sums don\'t match the targets. Keep working on the arrangement!';
-            feedback.classList.add('warning');
+            feedback.classList.add('error');
             return;
         }
         
-        // Check if all corners contain valid words
-        const corners = [
-            [0, 1, 3, 4], // Top-left
-            [1, 2, 4, 5], // Top-right
-            [3, 4, 6, 7], // Bottom-left
-            [4, 5, 7, 8]  // Bottom-right
-        ];
-        
-        const allCornersValid = corners.every(corner => {
-            const word = corner.map(index => this.cells[index].value).join('');
-            return this.givenWords.includes(word);
-        });
-        
-        if (!allCornersValid) {
+        // Check if corner words are valid
+        if (!this.validateCornerWords()) {
             feedback.textContent = 'Not all corners contain valid words from the given set!';
             feedback.classList.add('error');
             return;
@@ -489,6 +501,7 @@ class WordGridPuzzle {
         // Reset timer
         this.resetTimer();
         
+
         // Clear all cells
         this.cells.forEach(cell => {
             cell.value = '';
@@ -537,7 +550,6 @@ async function fetchWeeklyPuzzles() {
         return getDefaultPuzzle(); // Fallback to default puzzle
     }
 }
-
 
 function getDefaultPuzzle() {
     // Fallback puzzle data in case API is unavailable
@@ -600,7 +612,10 @@ function hideHowToPlayPopup() {
 // Initialize everything when the page loads
 document.addEventListener('DOMContentLoaded', async () => {
     // Load weekly puzzles and initialize the puzzle
+    console.log('Loading weekly puzzles...');
     const weeklyPuzzles = await loadTodaysPuzzle();
+    console.log('Raw API response:', weeklyPuzzles);
+    console.log(`Got ${weeklyPuzzles.length} puzzles`);
     
     if (weeklyPuzzles.length > 0) {
         // Extract the puzzle data - could be .puzzle or ["puzzle-data"]
@@ -611,6 +626,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Set the weekly puzzles for navigation
         puzzle.setWeeklyPuzzles(weeklyPuzzles);
         puzzle.updatePuzzleTitle();
+    } else {
+        console.error('No puzzles received!');
     }
     
     // Setup popup functionality
@@ -648,4 +665,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideHowToPlayPopup();
         }
     });
-});
+}); 
