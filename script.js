@@ -58,6 +58,12 @@ class WordGridPuzzle {
         this.targetRowSums = actualPuzzle.targets.rows;
         this.targetColSums = actualPuzzle.targets.cols;
         this.givenWords = actualPuzzle.words.map(word => word.word);
+
+        this.givenWordsAlpha = this.givenWords.map(word=>{
+            return word.split('').sort().join('');
+        })
+
+        //console.log('given words alpha ', this.givenWordsAlpha);
         this.correctSolution = actualPuzzle.solution;
         
         console.log('Puzzle loaded successfully:', this.correctSolution);
@@ -441,7 +447,7 @@ class WordGridPuzzle {
     revealWord() {
         const finalWordInput = document.getElementById('final-word');
         const feedback = document.getElementById('feedback');
-        
+        //console.log('in reveal word');
         // Clear previous feedback
         feedback.className = 'feedback';
         
@@ -452,7 +458,13 @@ class WordGridPuzzle {
             feedback.textContent = 'Please fill in all grid cells first!';
             feedback.classList.add('error');
             return;
-        }
+            }
+            else{
+                feedback.textContent = '';
+                feedback.classList.remove('error');
+                //return;
+            }
+        //}
         
         // Check if sums are correct
         if (!this.checkAllSumsCorrect()) {
@@ -469,9 +481,12 @@ class WordGridPuzzle {
             [4, 5, 7, 8]  // Bottom-right
         ];
         
+        //console.log('given words alpha',this.givenWordsAlpha);
         const allCornersValid = corners.every(corner => {
-            const word = corner.map(index => this.cells[index].value).join('');
-            return this.givenWords.includes(word);
+            const word = corner.map(index => this.cells[index].value).sort().join('');
+            
+            //console.log('word ',word)
+            return this.givenWordsAlpha.includes(word);
         });
         
         if (!allCornersValid) {

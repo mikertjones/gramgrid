@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
     <meta name="description" content="Novel and unique word puzzle which combines logic and a little bit of arithmetic">
-    <title>Word Grid Puzzle</title>
+    <title>GramGrid - adds up to a word puzzle</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -106,6 +106,15 @@
                 </div>
 
                 <div class="feedback" id="feedback"></div>
+                    
+                <div id="email"></div>
+<!--                 <script>
+                  const user = "example";
+                  const domain = "example.com";
+                  const email = user + "@" + domain;
+                  document.getElementById("email").textContent = email;
+                </script>
+ -->                    
             </div>
         </main>
 
@@ -131,5 +140,13 @@
     </div>
 
     <script src="script.js"></script>
+    <script>
+      const user = "contact";
+      const domain = "gramgrid.net";
+      const email = user + "@" + domain;
+/*      document.getElementById("email").textContent = 'Please get in touch on ' + email;*/
+      document.getElementById("email").innerHTML = 'Please get in touch: &nbsp<a href="mailto:' + email + '">' + email + '</a>';
+    </script>
+
 </body>
 </html> 
