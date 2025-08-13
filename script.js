@@ -529,14 +529,30 @@ class WordGridPuzzle {
 
 }
 
+const API_KEY = '088ff7f989d7f7fde77642a7c81d143dfc9a3ee740034d015a1693e2a48f4f5a';
+const API_BASE_URL = 'https://gramgrid-api-production.up.railway.app';
+
+
+
 // API Functions
 async function fetchWeeklyPuzzles() {
     try {
         //const response = await fetch('http://localhost:3000/api/puzzles/week?level=CL');
-        const response = await fetch('https://gramgrid-api-production.up.railway.app/api/puzzles/week?level=CL');
+
+//        const response = await fetch('https://gramgrid-api-production.up.railway.app/api/puzzles/week?level=CL');
+
+        const response = await fetch(`${API_BASE_URL}/api/puzzles/week?level=CL`, {
+              method: 'GET',
+              headers: {
+                'x-api-key': API_KEY,
+                'Content-Type': 'application/json'
+              }
+            });
+
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+
         const data = await response.json();
         console.log('API returned puzzles:', data.puzzles.length);
         
