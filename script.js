@@ -542,7 +542,7 @@ async function fetchWeeklyPuzzles() {
 //        const response = await fetch('https://gramgrid-api-production.up.railway.app/api/puzzles/week?level=CL');
 
         const response = await fetch(`${API_BASE_URL}/api/puzzles/week?level=CL`, {
-              method: 'GET',
+//              method: 'GET',
               headers: {
                 'x-api-key': API_KEY,
                 'Content-Type': 'application/json'
