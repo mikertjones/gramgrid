@@ -272,6 +272,9 @@
     <script>
         // Replace with your Railway API URL
         const API_URL = 'https://gramgrid-api-production.up.railway.app';
+
+        const API_KEY = '088ff7f989d7f7fde77642a7c81d143dfc9a3ee740034d015a1693e2a48f4f5a';
+        const API_BASE_URL = 'https://gramgrid-api-production.up.railway.app';
         
         async function loadAnalytics() {
             const loading = document.getElementById('loading');
@@ -283,7 +286,13 @@
             errorContainer.innerHTML = '';
             
             try {
-                const response = await fetch(`${API_URL}/api/analytics/stats`);
+                const response = await fetch(`${API_URL}/api/analytics/stats`, {
+//              method: 'GET',
+              headers: {
+                'x-api-key': API_KEY,
+                'Content-Type': 'application/json'
+              }
+            });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
