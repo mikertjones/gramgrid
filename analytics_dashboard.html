@@ -288,11 +288,11 @@
             try {
                 const response = await fetch(`${API_URL}/api/analytics/stats`, {
 //              method: 'GET',
-              headers: {
-                'x-api-key': API_KEY,
-                'Content-Type': 'application/json'
-              }
-            });
+                      headers: {
+                        'x-api-key': API_KEY,
+                        'Content-Type': 'application/json'
+                      }
+                    });
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
