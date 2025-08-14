@@ -4,10 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#2563eb">
-    <meta name="description" content="Novel and unique word puzzle which combines logic and a little bit of arithmetic">
+    <meta name="msapplication-TileColor" content="#2563eb">
+    <meta name="description" content="Novel and unique daily word puzzle combining logic and a little bit of arithmetic">
     <title>GramGrid - adds up to a word puzzle</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="pwa-styles.css">
+
+    <!-- iOS specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Word Puzzles">
+    <link rel="apple-touch-icon" href="/icons/icon-180x180.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="keywords" content="word puzzles, daily puzzles, brain games, vocabulary, offline games">
+ 
+
 </head>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-J1M8NWHE72"></script>
@@ -19,6 +36,27 @@
   gtag('config', 'G-J1M8NWHE72');
 </script>
 <body>
+
+    <!-- Install Banner (hidden by default) -->
+    <div id="install-banner" class="install-banner" style="display: none;">
+        <div class="install-content">
+            <span>📱 Install GramGrid for the best experience!</span>
+            <button id="install-button" class="install-btn">Install</button>
+            <button id="dismiss-install" class="dismiss-btn">×</button>
+        </div>
+    </div>
+    
+    <!-- Offline Indicator -->
+    <div id="offline-indicator" class="offline-indicator" style="display: none;">
+        <span>📶 You're offline - using cached puzzles</span>
+    </div>
+    
+
+
+
+
+
+
     <div class="container">
         <header>
             <img src="gramgrid-logo-2-transparent.png" alt="GramGrid" class="logo">
@@ -138,6 +176,10 @@
             </div>
         </div>
     </div>
+
+
+
+    <script src="pwa-script.js"></script>
 
     <script src="script.js"></script>
     <script>
