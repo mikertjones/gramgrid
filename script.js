@@ -540,8 +540,8 @@ async function fetchWeeklyPuzzles() {
         //const response = await fetch('http://localhost:3000/api/puzzles/week?level=CL');
 
 //        const response = await fetch('https://gramgrid-api-production.up.railway.app/api/puzzles/week?level=CL');
-
-        const response = await fetch(`${API_BASE_URL}/api/puzzles/week?level=CL`, {
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const response = await fetch(`${API_BASE_URL}/api/puzzles/week?level=CL&date=${today}`, {
 //              method: 'GET',
               headers: {
                 'x-api-key': API_KEY,
