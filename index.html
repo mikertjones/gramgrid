@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="pwa-styles.css">
 
     <!-- iOS specific -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Word Puzzles">
     <link rel="apple-touch-icon" href="/icons/icon-180x180.png">
@@ -40,7 +40,7 @@
     <!-- Install Banner (hidden by default) -->
     <div id="install-banner" class="install-banner" style="display: none;">
         <div class="install-content">
-            <span>📱 Install GramGrid for the best experience!</span>
+            <span style="text-align:center;">📱 Install GramGrid for the best experience!<br>No cookies / no tracking.</span>
             <button id="install-button" class="install-btn">Install</button>
             <button id="dismiss-install" class="dismiss-btn">×</button>
         </div>
@@ -134,16 +134,34 @@
 
                 <div class="final-word-section">
                     <label for="final-word">9-letter word?</label>
+                    <span class = "hint"><i>Hint: the word might be a plural or present tense of a verb</i></span>
                     <input type="text" id="final-word" placeholder="9-letter word" maxlength="9">
                     <div class="word-feedback" id="word-feedback"></div>
+
+<!--                     <div class="feedback" id="feedback"></div> -->
                     
                     <div class="action-buttons">
                         <button id="reset-button">Reset Puzzle</button>
                         <button id="reveal-button">Reveal Word</button>
                     </div>
+
+                    <div  class="outlinks" >
+                        <span>Enjoyed these daily puzzles? You might like a collection of entirely new puzzles on <a href="https://www.amazon.co.uk/dp/B0FMY7K8R6" target="_blank" onclick="gtag('event', 'click', {
+                          'event_category': 'outbound',
+                          'event_label': 'amazon_book',
+                          'transport_type': 'beacon'
+                        });">Amazon</a></span>
+
+                        <span>Read the story of how GramGrid developed from an idea-worm to PWA on <a href="https://medium.com/@mrtjones/idea-on-paper-to-a-pwa-a-2-month-ai-journey-ac079dfffa6c"  target="_blank" onclick="gtag('event', 'click', {
+                          'event_category': 'outbound',
+                          'event_label': 'medium_article', 
+                          'transport_type': 'beacon'
+                        });">Medium</a></span>
+                    </div>
+
                 </div>
 
-                <div class="feedback" id="feedback"></div>
+<!--                 <div class="feedback" id="feedback"></div> -->
                     
                 <div id="email"></div>
 <!--                 <script>

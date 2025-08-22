@@ -240,6 +240,7 @@ class WordGridPuzzle {
                 this.updateAllSums();
                 this.validateCornerWords();
                 this.checkAllSumsCorrect();
+                this.clearWordFeedback();
 
             });
             
@@ -446,10 +447,10 @@ class WordGridPuzzle {
 
     revealWord() {
         const finalWordInput = document.getElementById('final-word');
-        const feedback = document.getElementById('feedback');
+        const feedback = document.getElementById('word-feedback');
         //console.log('in reveal word');
         // Clear previous feedback
-        feedback.className = 'feedback';
+        feedback.className = 'word-feedback';
         
         // Check if grid is complete
         const gridWord = this.getCurrentGridWord();
@@ -513,9 +514,9 @@ class WordGridPuzzle {
         document.getElementById('final-word').value = '';
         
         // Clear feedback
-        const feedback = document.getElementById('feedback');
+        const feedback = document.getElementById('word-feedback');
         feedback.textContent = '';
-        feedback.className = 'feedback';
+        feedback.className = 'word-feedback';
         
         // Clear word feedback
         this.clearWordFeedback();
