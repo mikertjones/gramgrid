@@ -665,4 +665,54 @@ footer {
         padding: 5px 10px;
         font-size: 0.75em;
     }
+}
+
+/* Completion State Styles */
+.completion-indicator {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9em;
+    margin: 10px 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+    animation: completionPulse 2s ease-in-out;
+}
+
+@keyframes completionPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Completed puzzle grid cells */
+.grid input.completed {
+    background-color: #f0fdf4;
+    border-color: #10b981;
+    color: #059669;
+    font-weight: 600;
+    cursor: not-allowed;
+}
+
+.grid input.completed:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+}
+
+/* Completed state for timer */
+#timer-text.completed {
+    color: #059669;
+    font-weight: 600;
+}
+
+/* Fade in animation for restored puzzles */
+.grid.restored {
+    animation: fadeInGrid 0.5s ease-in-out;
+}
+
+@keyframes fadeInGrid {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
 } 

@@ -17,6 +17,9 @@ class WordGridPuzzle {
         this.startTime = null;
         this.puzzleCompleted = false;
         
+        // Progress manager for local storage
+        this.progressManager = new PuzzleProgressManager();
+        
         // Initialize grid
         this.initializeGrid();
         this.attachEventListeners();
@@ -118,7 +121,18 @@ class WordGridPuzzle {
             this.loadPuzzleData(puzzleData);
             this.updateNavigationButtons();
             this.updatePuzzleTitle();
-            this.resetPuzzle(); // Clear the grid when switching puzzles
+            
+            // Check if this puzzle was previously completed
+            const puzzleDate = currentPuzzle.date;
+            const savedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
+            
+            if (savedState && savedState.completed) {
+                // Restore completed puzzle state
+                this.restoreCompletedPuzzle(savedState);
+            } else {
+                // Clear the grid for fresh puzzle
+                this.resetPuzzle();
+            }
         }
     }
 
@@ -219,11 +233,157 @@ class WordGridPuzzle {
             this.puzzleCompleted = true;
             this.stopTimer();
             
+            // Save completed puzzle state
+            this.saveCompletedPuzzleState();
+            
+            // Show completion UI
+            this.showCompletionState();
+            
 /*            const completionMessage = document.getElementById('completion-message');
             if (completionMessage) {
                 completionMessage.style.display = 'inline';
             }
 */        }
+    }
+
+    // Save completed puzzle state to local storage
+    async saveCompletedPuzzleState() {
+        if (this.weeklyPuzzles.length === 0) return;
+        
+        const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+        const puzzleDate = currentPuzzle.date;
+        
+        // Get current grid state
+        const gridState = this.cells.map(cell => cell.value);
+        
+        // Get final word input
+        const finalWordInput = document.getElementById('final-word');
+        const finalWord = finalWordInput ? finalWordInput.value : '';
+        
+        // Calculate completion time
+        const completionTime = this.startTime ? Date.now() - this.startTime : 0;
+        
+        const completionData = {
+            gridState: gridState,
+            finalWord: finalWord,
+            solution: this.correctSolution,
+            completionTime: completionTime,
+            targetRowSums: [...this.targetRowSums],
+            targetColSums: [...this.targetColSums],
+            givenWords: [...this.givenWords],
+            timestamp: Date.now()
+        };
+        
+        await this.progressManager.markCompleted(puzzleDate, completionData);
+        console.log(`Saved completed puzzle for ${puzzleDate}`);
+        
+        // Track completion analytics
+        if (window.analytics) {
+            window.analytics.track('puzzle_completed', puzzleDate, {
+                completionTime: completionTime,
+                solution: this.correctSolution
+            });
+        }
+    }
+
+    // Restore completed puzzle state from local storage
+    restoreCompletedPuzzle(savedState) {
+        if (!savedState || !savedState.gridState) return;
+        
+        // Restore grid letters
+        savedState.gridState.forEach((letter, index) => {
+            if (this.cells[index]) {
+                this.cells[index].value = letter || '';
+            }
+        });
+        
+        // Restore final word if saved
+        if (savedState.finalWord) {
+            const finalWordInput = document.getElementById('final-word');
+            if (finalWordInput) {
+                finalWordInput.value = savedState.finalWord;
+            }
+        }
+        
+        // Mark as completed
+        this.puzzleCompleted = true;
+        this.timerStarted = false;
+        
+        // Update UI to show completion state (disable inputs)
+        this.showCompletionState();
+        
+        // Restore timer display with original completion time
+        this.restoreCompletionTimer(savedState.completionTime);
+        
+        // Show completion message
+        const completionMessage = document.getElementById('completion-message');
+        if (completionMessage) {
+            completionMessage.style.display = 'inline';
+        }
+        
+        // Show word feedback as "Success"
+        const wordFeedback = document.getElementById('word-feedback');
+        if (wordFeedback && savedState.finalWord === savedState.solution) {
+            wordFeedback.textContent = 'Success';
+            wordFeedback.className = 'word-feedback success';
+        }
+        
+        // Update sums display
+        this.updateAllSums();
+        
+        console.log(`Restored completed puzzle from ${savedState.date}`);
+        
+        // Track revisit analytics
+        if (window.analytics) {
+            window.analytics.track('completed_puzzle_revisited', savedState.date, {
+                originalCompletionTime: savedState.completionTime,
+                solution: savedState.solution
+            });
+        }
+    }
+
+    // Show completion UI state
+    showCompletionState() {
+        // Disable all input cells
+        this.cells.forEach(cell => {
+            cell.disabled = true;
+            cell.classList.add('completed');
+        });
+        
+        // Don't modify timer or add banners - let existing completion logic handle UI
+    }
+
+    // Update completion indicator in UI (removed - not wanted)
+    updateCompletionIndicator(isCompleted) {
+        // Do nothing - completion indicator removed per user feedback
+    }
+
+    // Check if current puzzle is completed on initial load
+    async checkInitialCompletionState() {
+        if (this.weeklyPuzzles.length === 0) return;
+        
+        const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+        const puzzleDate = currentPuzzle.date;
+        const savedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
+        
+        if (savedState && savedState.completed) {
+            // Restore completed puzzle state
+            this.restoreCompletedPuzzle(savedState);
+        }
+    }
+
+    // Restore timer display for completed puzzle
+    restoreCompletionTimer(completionTimeMs) {
+        const elapsed = Math.floor(completionTimeMs / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        
+        const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        const timerText = document.getElementById('timer-text');
+        if (timerText) {
+            timerText.textContent = formattedTime;
+        }
     }
 
     attachEventListeners() {
@@ -505,9 +665,11 @@ class WordGridPuzzle {
         // Reset timer
         this.resetTimer();
         
-        // Clear all cells
+        // Clear all cells and enable them
         this.cells.forEach(cell => {
             cell.value = '';
+            cell.disabled = false;
+            cell.classList.remove('completed');
         });
         
         // Clear final word input
@@ -643,6 +805,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Set the weekly puzzles for navigation
         puzzle.setWeeklyPuzzles(weeklyPuzzles);
         puzzle.updatePuzzleTitle();
+        
+        // Check if today's puzzle is already completed
+        await puzzle.checkInitialCompletionState();
     }
     
     // Setup popup functionality
