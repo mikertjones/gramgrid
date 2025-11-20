@@ -20,6 +20,9 @@ class WordGridPuzzle {
         // Progress manager for local storage
         this.progressManager = new PuzzleProgressManager();
         
+        // Flag to prevent automatic state saving during restoration
+        this.isRestoringState = false;
+        
         // Initialize grid
         this.initializeGrid();
         this.attachEventListeners();
@@ -118,21 +121,31 @@ class WordGridPuzzle {
             const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
             const puzzleData = currentPuzzle.puzzle || currentPuzzle['puzzle-data'];
             
+            // Check if this puzzle was previously completed or has progress
+            const puzzleDate = currentPuzzle.date;
+            const completedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
+            const progressState = this.progressManager.getPuzzleState(puzzleDate);
+            
+            // Set flag to prevent automatic state saving during restoration
+            this.isRestoringState = true;
+            
             this.loadPuzzleData(puzzleData);
             this.updateNavigationButtons();
             this.updatePuzzleTitle();
             
-            // Check if this puzzle was previously completed
-            const puzzleDate = currentPuzzle.date;
-            const savedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
-            
-            if (savedState && savedState.completed) {
+            if (completedState && completedState.completed) {
                 // Restore completed puzzle state
-                this.restoreCompletedPuzzle(savedState);
+                this.restoreCompletedPuzzle(completedState);
+            } else if (progressState && progressState.gridCompleted) {
+                // Restore grid progress
+                this.restoreGridProgress(progressState);
             } else {
                 // Clear the grid for fresh puzzle
                 this.resetPuzzle();
             }
+            
+            // Clear the restoration flag
+            this.isRestoringState = false;
         }
     }
 
@@ -286,6 +299,40 @@ class WordGridPuzzle {
         }
     }
 
+    // Save grid progress when sums are correct (even without final word)
+    async saveGridProgress() {
+        if (this.weeklyPuzzles.length === 0 || this.isRestoringState) return;
+        
+        const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+        const puzzleDate = currentPuzzle.date;
+        
+        // Get current grid state
+        const gridState = this.cells.map(cell => cell.value);
+        
+        // Get final word input
+        const finalWordInput = document.getElementById('final-word');
+        const finalWord = finalWordInput ? finalWordInput.value : '';
+        
+        // Calculate elapsed time
+        const elapsedTime = this.startTime ? Date.now() - this.startTime : 0;
+        
+        const progressData = {
+            gridState: gridState,
+            finalWord: finalWord,
+            solution: this.correctSolution,
+            elapsedTime: elapsedTime,
+            targetRowSums: [...this.targetRowSums],
+            targetColSums: [...this.targetColSums],
+            givenWords: [...this.givenWords],
+            gridCompleted: true,
+            wordCompleted: finalWord === this.correctSolution,
+            timestamp: Date.now()
+        };
+        
+        await this.progressManager.saveSessionState(puzzleDate, progressData);
+        console.log(`Saved grid progress for ${puzzleDate}`);
+    }
+
     // Restore completed puzzle state from local storage
     restoreCompletedPuzzle(savedState) {
         if (!savedState || !savedState.gridState) return;
@@ -358,18 +405,28 @@ class WordGridPuzzle {
         // Do nothing - completion indicator removed per user feedback
     }
 
-    // Check if current puzzle is completed on initial load
+    // Check if current puzzle is completed or has progress on initial load
     async checkInitialCompletionState() {
         if (this.weeklyPuzzles.length === 0) return;
         
         const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
         const puzzleDate = currentPuzzle.date;
-        const savedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
+        const completedState = this.progressManager.getCompletedPuzzleState(puzzleDate);
+        const progressState = this.progressManager.getPuzzleState(puzzleDate);
         
-        if (savedState && savedState.completed) {
+        // Set flag to prevent automatic state saving during restoration
+        this.isRestoringState = true;
+        
+        if (completedState && completedState.completed) {
             // Restore completed puzzle state
-            this.restoreCompletedPuzzle(savedState);
+            this.restoreCompletedPuzzle(completedState);
+        } else if (progressState && progressState.gridCompleted) {
+            // Restore grid progress
+            this.restoreGridProgress(progressState);
         }
+        
+        // Clear the restoration flag
+        this.isRestoringState = false;
     }
 
     // Restore timer display for completed puzzle
@@ -383,6 +440,72 @@ class WordGridPuzzle {
         const timerText = document.getElementById('timer-text');
         if (timerText) {
             timerText.textContent = formattedTime;
+        }
+    }
+
+    // Restore grid progress (grid completed but word may not be)
+    restoreGridProgress(savedState) {
+        if (!savedState || !savedState.gridState) return;
+        
+        // Restore grid letters
+        savedState.gridState.forEach((letter, index) => {
+            if (this.cells[index]) {
+                this.cells[index].value = letter || '';
+            }
+        });
+        
+        // Restore final word if saved
+        if (savedState.finalWord) {
+            const finalWordInput = document.getElementById('final-word');
+            if (finalWordInput) {
+                finalWordInput.value = savedState.finalWord;
+            }
+        }
+        
+        // If word is completed, treat as fully completed
+        if (savedState.wordCompleted) {
+            this.puzzleCompleted = true;
+            this.timerStarted = false;
+            
+            // Show completion state
+            this.showCompletionState();
+            this.restoreCompletionTimer(savedState.elapsedTime);
+            
+            // Show completion message and word feedback
+            const completionMessage = document.getElementById('completion-message');
+            if (completionMessage) {
+                completionMessage.style.display = 'inline';
+            }
+            
+            const wordFeedback = document.getElementById('word-feedback');
+            if (wordFeedback) {
+                wordFeedback.textContent = 'Success';
+                wordFeedback.className = 'word-feedback success';
+            }
+        } else {
+            // Grid completed but word not yet - show grid completion state
+            this.timerStarted = false;
+            this.restoreCompletionTimer(savedState.elapsedTime);
+            
+            // Show grid completion message
+            const completionMessage = document.getElementById('completion-message');
+            if (completionMessage) {
+                completionMessage.style.display = 'inline';
+            }
+        }
+        
+        // Update sums display
+        this.updateAllSums();
+        
+        console.log(`Restored grid progress from ${savedState.date || 'session'}`);
+        
+        // Track revisit analytics
+        if (window.analytics) {
+            window.analytics.track('grid_progress_revisited', savedState.date, {
+                gridCompleted: savedState.gridCompleted,
+                wordCompleted: savedState.wordCompleted,
+                elapsedTime: savedState.elapsedTime
+            });
         }
     }
 
@@ -574,6 +697,9 @@ class WordGridPuzzle {
             if (completionMessage) {
                 completionMessage.style.display = 'inline';
             }
+            
+            // Save grid progress when sums are correct
+            this.saveGridProgress();
        }
  
         return gridComplete;
@@ -659,6 +785,10 @@ class WordGridPuzzle {
         // Reveal the word
         finalWordInput.value = this.correctSolution;
         this.clearWordFeedback();
+        
+        // Mark as completed since word was revealed
+        this.puzzleCompleted = true;
+        this.saveCompletedPuzzleState();
     }
 
     resetPuzzle() {
