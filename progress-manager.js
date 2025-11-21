@@ -97,11 +97,17 @@ class PuzzleProgressManager {
       const transaction = db.transaction(['completions'], 'readwrite');
       const store = transaction.objectStore('completions');
       
-      await store.put({
+      const request = store.put({
         id: 'completed_puzzles',
         dates: Array.from(this.persistedCompletions),
         lastUpdated: Date.now()
       });
+      
+      await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      
     } catch (error) {
       console.warn('Could not save completions:', error);
     }
@@ -113,7 +119,12 @@ class PuzzleProgressManager {
       const transaction = db.transaction(['completions'], 'readonly');
       const store = transaction.objectStore('completions');
       
-      const result = await store.get('completed_puzzles');
+      const request = store.get('completed_puzzles');
+      const result = await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      
       if (result?.dates) {
         this.persistedCompletions = new Set(result.dates);
       }
@@ -136,11 +147,17 @@ class PuzzleProgressManager {
         ...state
       }));
       
-      await store.put({
+      const request = store.put({
         id: 'completed_puzzle_states',
         states: statesArray,
         lastUpdated: Date.now()
       });
+      
+      await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      
     } catch (error) {
       console.warn('Could not save puzzle states:', error);
     }
@@ -153,7 +170,12 @@ class PuzzleProgressManager {
       const transaction = db.transaction(['puzzleStates'], 'readonly');
       const store = transaction.objectStore('puzzleStates');
       
-      const result = await store.get('completed_puzzle_states');
+      const request = store.get('completed_puzzle_states');
+      const result = await new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+      
       if (result?.states) {
         // Convert array back to Map
         this.completedPuzzleStates = new Map(
