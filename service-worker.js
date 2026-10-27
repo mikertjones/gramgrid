@@ -1,6 +1,6 @@
 // service-worker.js
-const CACHE_NAME = 'gramgrid-v7';
-const API_CACHE_NAME = 'gramgrid-api-v7';
+const CACHE_NAME = 'gramgrid-v8';
+const API_CACHE_NAME = 'gramgrid-api-v8';
 
 // Files to cache for offline use
 const STATIC_ASSETS = [
@@ -9,6 +9,9 @@ const STATIC_ASSETS = [
   '/styles.css',
   '/script.js',
   '/progress-manager.js',
+  '/stats.js',
+  '/pwa-script.js',
+  '/pwa-styles.css',
   '/analytics.js',
   '/manifest.json',
   '/gramgrid-howto-incorrect.jpg',
@@ -234,4 +237,4 @@ async function cacheTodaysPuzzle() {
   } catch (error) {
     console.error('Service Worker: Failed to cache today\'s puzzle:', error);
   }
-}*/
+}*/

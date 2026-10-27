@@ -40,7 +40,7 @@
     <!-- Install Banner (hidden by default) -->
     <div id="install-banner" class="install-banner" style="display: none;">
         <div class="install-content">
-            <span style="text-align:center;">📱 Install GramGrid for the best experience!<br>No cookies / no tracking.</span>
+            <span style="text-align:center;">📱 Install GramGrid for the best experience!<br>No ads, no sign-up.</span>
             <button id="install-button" class="install-btn">Install</button>
             <button id="dismiss-install" class="dismiss-btn">×</button>
         </div>
@@ -127,7 +127,7 @@
                 <div class="timer-section test">
                     <div class="timer-display">
                         <span id="timer-text">00:00</span>
-                        <span id="completion-message" style="display: none;">You got it! Well done</span>
+                        <span id="completion-message" style="display: none;">Grid done – now the word!</span>
                     </div>
                 </div>
 
@@ -135,8 +135,23 @@
                 <div class="final-word-section">
                     <label for="final-word">9-letter word?</label>
                     <span class = "hint"><i>Hint: the word might be a plural or present tense of a verb</i></span>
-                    <input type="text" id="final-word" placeholder="9-letter word" maxlength="9">
+                    <span class="final-word-wrap">
+                        <input type="text" id="final-word" placeholder="9-letter word" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false">
+                        <span id="word-status-icon" class="word-status-icon" role="img" aria-live="polite"></span>
+                    </span>
                     <div class="word-feedback" id="word-feedback"></div>
+
+                    <!-- Results strip: best time, streak and share (shown once solved) -->
+                    <div id="results-panel" class="results-strip" style="display: none;">
+                        <span class="stat"><span class="stat-icon">⭐</span>PB: <b id="stat-best-time">--:--</b></span>
+                        <span class="stat"><span class="stat-icon">🔥</span>DAYS: <b id="stat-streak">0</b></span>
+                        <span class="stat">MAX: <b id="stat-best-streak">0</b></span>
+                        <button id="share-button" class="share-button" aria-label="Share your result">
+                            <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M18 16.1c-.8 0-1.5.3-2 .8l-7.1-4.2c.1-.2.1-.5.1-.7s0-.5-.1-.7L16 7.2c.5.5 1.2.8 2 .8 1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3c0 .2 0 .5.1.7L8 9.8C7.5 9.3 6.8 9 6 9c-1.7 0-3 1.3-3 3s1.3 3 3 3c.8 0 1.5-.3 2-.8l7.1 4.2c-.1.2-.1.4-.1.6 0 1.6 1.3 2.9 2.9 2.9s2.9-1.3 2.9-2.9-1.2-2.9-2.8-2.9z"/></svg>
+                            <span id="share-label">SHARE</span>
+                        </button>
+                    </div>
+                    <div id="share-status" class="share-status" aria-live="polite"></div>
 
 <!--                     <div class="feedback" id="feedback"></div> -->
                     
@@ -205,14 +220,15 @@
 
     <script src="pwa-script.js"></script>
     <script src="progress-manager.js"></script>
+    <script src="stats.js"></script>
     <script src="script.js"></script>
     <script>
       const user = "contact";
       const domain = "gramgrid.net";
       const email = user + "@" + domain;
 /*      document.getElementById("email").textContent = 'Please get in touch on ' + email;*/
-      document.getElementById("email").innerHTML = 'Please get in touch: &nbsp<a href="mailto:' + email + '">' + email + '</a>';
+//      document.getElementById("email").innerHTML = 'Please get in touch: &nbsp<a href="mailto:' + email + '">' + email + '</a>';
     </script>
 
 </body>
-</html> 
+</html> 

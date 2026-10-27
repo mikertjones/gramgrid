@@ -6,7 +6,7 @@ class PuzzleProgressManager {
     this.completedPuzzleStates = new Map(); // date -> full completed puzzle state
     this.dbName = 'gramgrid-progress';
     this.dbVersion = 2; // Increment version for new schema
-    this.init();
+    this.ready = this.init(); // await this before reading saved progress
   }
 
   async init() {
@@ -234,4 +234,4 @@ function getPuzzleDate(puzzles, index) {
 }
 
 // Make PuzzleProgressManager available globally
-window.PuzzleProgressManager = PuzzleProgressManager;
+window.PuzzleProgressManager = PuzzleProgressManager;

@@ -19,6 +19,10 @@ class WordGridPuzzle {
         
         // Progress manager for local storage
         this.progressManager = new PuzzleProgressManager();
+
+        // Streaks, best time and share result (stored on this device)
+        this.stats = new GramGridStats();
+        this.finishMs = null; // solving time, fixed when the grid is completed
         
         // Flag to prevent automatic state saving during restoration
         this.isRestoringState = false;
@@ -128,6 +132,9 @@ class WordGridPuzzle {
             
             // Set flag to prevent automatic state saving during restoration
             this.isRestoringState = true;
+
+            // Start from a clean slate (cells, word box, timer), then restore any saved state
+            this.resetPuzzle(false);
             
             this.loadPuzzleData(puzzleData);
             this.updateNavigationButtons();
@@ -140,12 +147,14 @@ class WordGridPuzzle {
                 // Restore grid progress
                 this.restoreGridProgress(progressState);
             } else {
-                // Clear the grid for fresh puzzle
-                this.resetPuzzle();
+                // Fresh puzzle: ready to type
+                this.cells[0].focus();
             }
             
             // Clear the restoration flag
             this.isRestoringState = false;
+
+            this.showResults();
         }
     }
 
@@ -176,8 +185,10 @@ class WordGridPuzzle {
         const titleElement = document.getElementById('puzzle-title');
         const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
 
+        const puzzleNumber = currentPuzzle ? ` · #${ggPuzzleNumber(currentPuzzle.date)}` : '';
+
         if (this.currentPuzzleIndex === 0) {
-            titleElement.textContent = "Today's puzzle";
+            titleElement.textContent = "Today's puzzle" + puzzleNumber;
         } else {
             const puzzleDate = new Date(currentPuzzle.date);
             const formattedDate = puzzleDate.toLocaleDateString('en-US', { 
@@ -185,7 +196,7 @@ class WordGridPuzzle {
                 month: 'short', 
                 day: 'numeric' 
             });
-            titleElement.textContent = formattedDate;
+            titleElement.textContent = formattedDate + puzzleNumber;
         }
     }
 
@@ -213,6 +224,7 @@ class WordGridPuzzle {
         this.timerStarted = false;
         this.startTime = null;
         this.puzzleCompleted = false;
+        this.finishMs = null;
         
         const timerText = document.getElementById('timer-text');
         const completionMessage = document.getElementById('completion-message');
@@ -251,6 +263,10 @@ class WordGridPuzzle {
             
             // Show completion UI
             this.showCompletionState();
+            this.setWordState('correct');
+
+            // Record for streak/stats and show the share panel
+            this.recordSolve(false);
             
 /*            const completionMessage = document.getElementById('completion-message');
             if (completionMessage) {
@@ -273,8 +289,8 @@ class WordGridPuzzle {
         const finalWordInput = document.getElementById('final-word');
         const finalWord = finalWordInput ? finalWordInput.value : '';
         
-        // Calculate completion time
-        const completionTime = this.startTime ? Date.now() - this.startTime : 0;
+        // Completion time = the time shown on the timer (it stops when the grid is complete)
+        const completionTime = this.getSolveTimeMs() || 0;
         
         const completionData = {
             gridState: gridState,
@@ -362,17 +378,16 @@ class WordGridPuzzle {
         // Restore timer display with original completion time
         this.restoreCompletionTimer(savedState.completionTime);
         
-        // Show completion message
-        const completionMessage = document.getElementById('completion-message');
-        if (completionMessage) {
-            completionMessage.style.display = 'inline';
-        }
-        
-        // Show word feedback as "Success"
-        const wordFeedback = document.getElementById('word-feedback');
-        if (wordFeedback && savedState.finalWord === savedState.solution) {
-            wordFeedback.textContent = 'Success';
-            wordFeedback.className = 'word-feedback success';
+        // Word box: green tick, or bulb if the word was revealed
+        if (savedState.finalWord === savedState.solution) {
+            const solve = this.stats.getSolve(savedState.date);
+            this.setWordState(solve && solve.revealed ? 'revealed' : 'correct');
+        } else {
+            // Older saves without the word: still show "Grid done"
+            const completionMessage = document.getElementById('completion-message');
+            if (completionMessage) {
+                completionMessage.style.display = 'inline';
+            }
         }
         
         // Update sums display
@@ -427,6 +442,8 @@ class WordGridPuzzle {
         
         // Clear the restoration flag
         this.isRestoringState = false;
+
+        this.showResults();
     }
 
     // Restore timer display for completed puzzle
@@ -471,17 +488,8 @@ class WordGridPuzzle {
             this.showCompletionState();
             this.restoreCompletionTimer(savedState.elapsedTime);
             
-            // Show completion message and word feedback
-            const completionMessage = document.getElementById('completion-message');
-            if (completionMessage) {
-                completionMessage.style.display = 'inline';
-            }
-            
-            const wordFeedback = document.getElementById('word-feedback');
-            if (wordFeedback) {
-                wordFeedback.textContent = 'Success';
-                wordFeedback.className = 'word-feedback success';
-            }
+            // Word box shows the green tick
+            this.setWordState('correct');
         } else {
             // Grid completed but word not yet - show grid completion state
             this.timerStarted = false;
@@ -555,6 +563,12 @@ class WordGridPuzzle {
                 this.clearWordFeedback();
             }
         });
+
+        // Share button
+        const shareButton = document.getElementById('share-button');
+        if (shareButton) {
+            shareButton.addEventListener('click', () => this.shareResult());
+        }
 
         // Navigation buttons
         document.getElementById('prev-day-btn').addEventListener('click', () => {
@@ -692,6 +706,9 @@ class WordGridPuzzle {
         const gridComplete = rowSumsCorrect && colSumsCorrect;
         if(gridComplete) {
 //            console.log('grid complete');
+            if (this.finishMs === null && this.startTime && !this.puzzleCompleted && !this.isRestoringState) {
+                this.finishMs = Date.now() - this.startTime;
+            }
             this.stopTimer();
             const completionMessage = document.getElementById('completion-message');
             if (completionMessage) {
@@ -711,27 +728,61 @@ class WordGridPuzzle {
     }
 
     checkWordFeedback(word) {
-        const wordFeedback = document.getElementById('word-feedback');
+        this.clearWordFeedback();
         
         if (word === this.correctSolution) {
-            wordFeedback.textContent = 'Success';
-            wordFeedback.className = 'word-feedback success';
-            
-            // Complete the puzzle and stop the timer
+            // Complete the puzzle and stop the timer (word box goes green)
             this.completePuzzle();
         } else {
-            wordFeedback.textContent = 'Sorry, incorrect';
-            wordFeedback.className = 'word-feedback error';
+            // Pink box with a cross; clears as soon as they change it
+            this.setWordState('wrong');
         }
     }
 
+    // Clears the message line and a wrong-word state (never a solved word)
     clearWordFeedback() {
         const wordFeedback = document.getElementById('word-feedback');
         wordFeedback.textContent = '';
         wordFeedback.className = 'word-feedback';
+        if (this.wordState === 'wrong') {
+            this.setWordState(null);
+        }
+    }
+
+    // Word box state: 'correct' (green ✓), 'wrong' (pink ✗), 'revealed' (💡) or null
+    setWordState(state) {
+        const input = document.getElementById('final-word');
+        const icon = document.getElementById('word-status-icon');
+        if (!input || !icon) return;
+
+        this.wordState = state;
+        input.classList.remove('word-correct', 'word-wrong', 'word-revealed');
+        input.removeAttribute('aria-invalid');
+        input.disabled = false;
+        icon.textContent = '';
+        icon.className = 'word-status-icon';
+
+        const label = { correct: 'Correct', wrong: 'Not the word', revealed: 'Word revealed' };
+        if (state) {
+            input.classList.add(`word-${state}`);
+            icon.textContent = { correct: '✓', wrong: '✗', revealed: '💡' }[state];
+            icon.classList.add(state);
+            icon.setAttribute('aria-label', label[state]);
+        }
+        if (state === 'wrong') input.setAttribute('aria-invalid', 'true');
+
+        // Once the word is solved or revealed, lock it and drop "Grid done"
+        if (state === 'correct' || state === 'revealed') {
+            input.disabled = true;
+            const completionMessage = document.getElementById('completion-message');
+            if (completionMessage) completionMessage.style.display = 'none';
+        }
     }
 
     revealWord() {
+        // Already solved or revealed: nothing more to reveal
+        if (this.wordState === 'correct' || this.wordState === 'revealed') return;
+
         const finalWordInput = document.getElementById('final-word');
         const feedback = document.getElementById('word-feedback');
         //console.log('in reveal word');
@@ -785,13 +836,18 @@ class WordGridPuzzle {
         // Reveal the word
         finalWordInput.value = this.correctSolution;
         this.clearWordFeedback();
+        this.setWordState('revealed');
         
         // Mark as completed since word was revealed
+        const alreadyCompleted = this.puzzleCompleted;
         this.puzzleCompleted = true;
         this.saveCompletedPuzzleState();
+        if (!alreadyCompleted) {
+            this.recordSolve(true);
+        }
     }
 
-    resetPuzzle() {
+    resetPuzzle(focusFirstCell = true) {
         // Reset timer
         this.resetTimer();
         
@@ -802,8 +858,9 @@ class WordGridPuzzle {
             cell.classList.remove('completed');
         });
         
-        // Clear final word input
+        // Clear final word input and its tick/cross
         document.getElementById('final-word').value = '';
+        this.setWordState(null);
         
         // Clear feedback
         const feedback = document.getElementById('word-feedback');
@@ -815,9 +872,96 @@ class WordGridPuzzle {
         
         // Update sums
         this.updateAllSums();
+
+        // Hide the share panel while replaying
+        this.hideResults();
         
         // Focus first cell
-        this.cells[0].focus();
+        if (focusFirstCell) {
+            this.cells[0].focus();
+        }
+    }
+
+    // ---- Streak, stats and share ----
+
+    // Today's date as the game sees it (same rule used to fetch today's puzzle)
+    getTodayDate() {
+        return new Date().toISOString().split('T')[0];
+    }
+
+    getCurrentPuzzleDate() {
+        const currentPuzzle = this.weeklyPuzzles[this.currentPuzzleIndex];
+        return currentPuzzle ? currentPuzzle.date : null;
+    }
+
+    // The time shown on the timer
+    getSolveTimeMs() {
+        if (this.finishMs !== null) return this.finishMs;
+        return this.startTime ? Date.now() - this.startTime : null;
+    }
+
+    recordSolve(revealed) {
+        const puzzleDate = this.getCurrentPuzzleDate();
+        if (!puzzleDate) return;
+
+        this.stats.recordSolve(puzzleDate, {
+            ms: this.getSolveTimeMs(),
+            revealed: revealed,
+            sameDay: puzzleDate === this.getTodayDate()
+        });
+        this.showResults();
+    }
+
+    showResults() {
+        const panel = document.getElementById('results-panel');
+        const puzzleDate = this.getCurrentPuzzleDate();
+        if (!panel || !puzzleDate) return;
+
+        if (!this.stats.getSolve(puzzleDate)) {
+            this.hideResults();
+            return;
+        }
+
+        const today = this.getTodayDate();
+        const bestTime = this.stats.bestTime();
+        document.getElementById('stat-streak').textContent = this.stats.currentStreak(today);
+        document.getElementById('stat-best-streak').textContent = this.stats.bestStreak();
+        document.getElementById('stat-best-time').textContent = bestTime ? ggFormatClock(bestTime) : '--:--';
+        document.getElementById('share-label').textContent = 'SHARE';
+        document.getElementById('share-status').textContent = '';
+
+        panel.style.display = 'flex';
+    }
+
+    hideResults() {
+        const panel = document.getElementById('results-panel');
+        if (panel) panel.style.display = 'none';
+        const status = document.getElementById('share-status');
+        if (status) status.textContent = '';
+    }
+
+    async shareResult() {
+        const puzzleDate = this.getCurrentPuzzleDate();
+        if (!puzzleDate) return;
+
+        const text = this.stats.shareText(puzzleDate, this.getTodayDate());
+        const outcome = await ggShareResult(text);
+
+        const status = document.getElementById('share-status');
+        const label = document.getElementById('share-label');
+        status.textContent = '';
+        if (outcome === 'copied') {
+            // Brief confirmation on the button itself
+            label.textContent = 'COPIED';
+            clearTimeout(this.shareLabelTimer);
+            this.shareLabelTimer = setTimeout(() => { label.textContent = 'SHARE'; }, 2000);
+        } else if (outcome === 'failed') {
+            status.textContent = text; // let them copy it by hand
+        }
+
+        if (typeof gtag !== 'undefined' && (outcome === 'shared' || outcome === 'copied')) {
+            gtag('event', 'share', { method: outcome, puzzle: ggPuzzleNumber(puzzleDate) });
+        }
     }
 
 }
@@ -936,6 +1080,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         puzzle.setWeeklyPuzzles(weeklyPuzzles);
         puzzle.updatePuzzleTitle();
         
+        // Wait for saved progress to load, then give existing players credit
+        // for puzzles finished before streaks existed
+        await puzzle.progressManager.ready;
+        puzzle.stats.seedFromCompletions(puzzle.progressManager.completedPuzzleStates);
+
         // Check if today's puzzle is already completed
         await puzzle.checkInitialCompletionState();
     }
@@ -975,4 +1124,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             hideHowToPlayPopup();
         }
     });
-});
+});
