@@ -944,8 +944,8 @@ class WordGridPuzzle {
         const puzzleDate = this.getCurrentPuzzleDate();
         if (!puzzleDate) return;
 
-        const text = this.stats.shareText(puzzleDate, this.getTodayDate());
-        const outcome = await ggShareResult(text);
+        const message = this.stats.shareMessage(puzzleDate, this.getTodayDate());
+        const outcome = await ggShareResult(message);
 
         const status = document.getElementById('share-status');
         const label = document.getElementById('share-label');
@@ -956,7 +956,7 @@ class WordGridPuzzle {
             clearTimeout(this.shareLabelTimer);
             this.shareLabelTimer = setTimeout(() => { label.textContent = 'SHARE'; }, 2000);
         } else if (outcome === 'failed') {
-            status.textContent = text; // let them copy it by hand
+            status.textContent = message.text; // let them copy it by hand
         }
 
         if (typeof gtag !== 'undefined' && (outcome === 'shared' || outcome === 'copied')) {

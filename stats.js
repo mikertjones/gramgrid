@@ -4,6 +4,7 @@
 const GG_FIRST_PUZZLE_DATE = '2025-07-22'; // Puzzle #1
 const GG_STATS_KEY = 'gramgrid-stats';
 const GG_DAY_MS = 24 * 60 * 60 * 1000;
+const GG_SITE_URL = 'https://gramgrid.net';
 
 // 'YYYY-MM-DD' -> whole days since 1 Jan 1970 (UTC, so clock changes don't matter)
 function ggDayNumber(dateStr) {
@@ -14,6 +15,14 @@ function ggDayNumber(dateStr) {
 // Puzzle number: 22 Jul 2025 = #1
 function ggPuzzleNumber(dateStr) {
     return ggDayNumber(dateStr) - ggDayNumber(GG_FIRST_PUZZLE_DATE) + 1;
+}
+
+// 'YYYY-MM-DD' -> "28 Oct 2026"
+function ggFormatDate(dateStr) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC'
+    });
 }
 
 // Milliseconds -> "0:36" or "12:05"
@@ -127,26 +136,45 @@ class GramGridStats {
         );
     }
 
-    // e.g. "GramGrid #461 🔥4 · 0:36 · word ✅ · gramgrid.net"
-    shareText(date, todayStr) {
+    // Share message: title (used as the email subject) and spoiler-free text, e.g.
+    //   🧩 GramGrid #463 · 28 Oct 2026
+    //   🔥 Streak: 4 days
+    //   ⏱️ Time: 2:36
+    //   ✅ Solved!
+    //
+    //   Play today's puzzle at https://gramgrid.net
+    shareMessage(date, todayStr) {
         const solve = this.getSolve(date);
-        const parts = [`GramGrid #${ggPuzzleNumber(date)}`];
+        const number = ggPuzzleNumber(date);
+        const lines = [`🧩 GramGrid #${number} · ${ggFormatDate(date)}`];
+
+        // Streak only for today's puzzle solved today
         if (solve && solve.sameDay && date === todayStr) {
-            parts[0] += ` 🔥${this.currentStreak(todayStr)}`;
+            const streak = this.currentStreak(todayStr);
+            lines.push(`🔥 Streak: ${streak} ${streak === 1 ? 'day' : 'days'}`);
         }
-        if (solve && solve.ms) parts.push(ggFormatTime(solve.ms));
-        parts.push(solve && solve.revealed ? 'word 💡' : 'word ✅');
-        parts.push('gramgrid.net');
-        return parts.join(' · ');
+        if (solve && solve.ms) {
+            lines.push(`⏱️ Time: ${ggFormatTime(solve.ms)}`);
+        }
+        lines.push(solve && solve.revealed ? '💡 Word revealed' : '✅ Solved!');
+        lines.push('');
+        lines.push(`Play today's puzzle at ${GG_SITE_URL}`);
+
+        return {
+            title: `GramGrid #${number} – Daily Word Puzzle`,
+            text: lines.join('\n')
+        };
     }
 }
 
-// Share: phone share sheet where available, otherwise copy to clipboard
-async function ggShareResult(text) {
+// Share: phone share sheet where available, otherwise copy to clipboard.
+// The link is in the text only (not passed separately as a url), so apps
+// don't add it a second time - Gokuro's email shows it twice.
+async function ggShareResult({ title, text }) {
     const isTouch = window.matchMedia('(pointer: coarse)').matches;
     if (isTouch && navigator.share) {
         try {
-            await navigator.share({ text });
+            await navigator.share({ title, text });
             return 'shared';
         } catch (e) {
             if (e.name === 'AbortError') return 'cancelled';

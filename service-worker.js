@@ -1,6 +1,6 @@
 // service-worker.js
-const CACHE_NAME = 'gramgrid-v8';
-const API_CACHE_NAME = 'gramgrid-api-v8';
+const CACHE_NAME = 'gramgrid-v9';
+const API_CACHE_NAME = 'gramgrid-api-v9';
 
 // Files to cache for offline use
 const STATIC_ASSETS = [
